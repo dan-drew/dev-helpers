@@ -1,0 +1,32 @@
+#! /bin/bash
+set -e -o pipefail
+
+readonly HELP='Terraform apply shortcut
+
+ta [-a] [target [...]]
+
+  -a      Enable -auto-approve (use carefully!)
+  target  Limit operation to specified targets
+'
+
+function apply() {
+  local targets
+
+  if [[ "$1" == "-a" ]]; then
+    targets="-auto-approve"
+    shift
+  fi
+
+  while [[ -n "$1" ]]; do
+    targets="${targets} -target=$1"
+    shift
+  done
+
+  terraform apply $targets
+}
+
+if [[ "$1" == "--help" ]]; then
+  echo "$HELP"
+else
+  apply $*
+fi

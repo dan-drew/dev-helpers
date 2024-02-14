@@ -1,0 +1,47 @@
+#! /bin/bash
+set -e -o pipefail
+
+readonly HELP='Terraform plan shortcut
+
+tp [-l] [-s] [target [...]]
+
+  -l      Send output to less (Linux only?)
+  -s      Only list summary of resources that will be changed
+  target  Limit operation to specified targets
+'
+
+
+function plan() {
+  local args
+
+  while [[ -n "$1" ]]; do
+    if [[ "${1:0:1}" == "-" ]]; then
+      args="${args} $1"
+    else
+      args="${args} -target=$1"
+    fi
+    shift
+  done
+
+  terraform plan $args
+}
+
+function plan_with_less() {
+  plan $* 2>&1 | less -R
+}
+
+function plan_with_summary() {
+  plan -no-color $* | sed -E -e '/^\s+#/!d; s/^\s+#\s+//'
+}
+
+if [[ "$1" == "--help" ]]; then
+  echo "$HELP"
+elif [[ "$1" == "-s" ]]; then
+  shift
+  plan_with_summary $*
+elif [[ "$1" == "-l" ]]; then
+  shift
+  plan_with_less $*
+else
+  plan $*
+fi

@@ -1,0 +1,15 @@
+#! /bin/bash
+set -e -o pipefail
+
+readonly HELP='Terraform workspace shortcut
+
+tw [workspace]
+
+  workspace   Switch to named workspace
+'
+
+if [[ -n "$1" ]]; then
+  terraform workspace select $1
+else
+  terraform workspace list
+fi
