@@ -3,13 +3,36 @@ set -e -o pipefail
 
 readonly HELP='Terraform workspace shortcut
 
-tw [workspace]
+tw
+  List workspaces
 
-  workspace   Switch to named workspace
+tw <workspace>
+  Switch to named workspace
+
+tw new <workspace>
+  Create named workspace
 '
 
-if [[ -n "$1" ]]; then
-  terraform workspace select $1
+function run() {
+  if [[ -e terragrunt.hcl ]]; then
+    terragrunt --log-format bare run -- workspace "$@"
+  else
+    terraform workspace "$@"
+  fi
+}
+
+if [[ -z "$1" ]]; then
+  run list
 else
-  terraform workspace list
+  case "$1" in
+    -h|--help)
+      echo "$HELP"
+      ;;
+    new|create)
+      run new "${2?Workspace name is required}"
+      ;;
+    *)
+      run select "${1}"
+      ;;
+  esac
 fi

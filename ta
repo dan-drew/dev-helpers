@@ -9,6 +9,14 @@ ta [-a] [target [...]]
   target  Limit operation to specified targets
 '
 
+function run() {
+  if [[ -e terragrunt.hcl ]]; then
+    terragrunt --log-format bare "$@"
+  else
+    terraform "$@"
+  fi
+}
+
 function apply() {
   local targets
 
@@ -22,11 +30,11 @@ function apply() {
     shift
   done
 
-  terraform apply $targets
+  run apply $targets
 }
 
 if [[ "$1" == "--help" ]]; then
   echo "$HELP"
 else
-  apply $*
+  apply "$@"
 fi

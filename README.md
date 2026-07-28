@@ -69,7 +69,7 @@ Creates a new fixup commit. Shortcut for `git commit --fixup=HEAD`
 
 ```
 $ gcf
-$ git log --oneline
+$ gls
 abcdef2 (HEAD -> my-branch, origin/my-branch) fixup! Initial commit
 abcdef1 New commit
 abcdef0 (HEAD -> main, origin/main) Initial commit
