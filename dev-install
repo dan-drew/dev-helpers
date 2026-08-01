@@ -1,29 +1,144 @@
 #! /bin/bash
+set -eo pipefail
+
+#**********************************************************
+# CONSTANTS
+#**********************************************************
+
+readonly THIS_DIR=$( realpath $( dirname "$0" ) )
+readonly is_linux=$( [[ "$(uname)" == "Linux" ]] && echo true || echo false )
+readonly is_apple=$( [[ "$(uname)" == "Darwin" ]] && echo true || echo false )
+
+readonly RED='\033[31m'
+readonly GREEN='\033[32m'
+readonly BOLD='\033[1m'
+readonly RESET='\033[0m'
+readonly RED_BOLD='${RED}${BOLD}'
+readonly GREEN_BOLD='${GREEN}${BOLD}'
+
+readonly HELP_TEXT="Usage:
+  $0 --help
+  $0 --list
+  $0 <module> [<module> ...]
+
+Options:
+  -h, --help    Show this help message and exit
+  -l, --list    List available modules
+"
+
+#**********************************************************
+# GLOBALS
+#**********************************************************
+
+declare -A all_modules
+declare -A modules
+declare -A required_modules
+declare -g -A module_state
+
+#**********************************************************
+# HELPER FUNCTIONS
+#**********************************************************
 
 function download() {
   echo "Downloading ${1}..."
   curl -s $2 > $3
 }
 
-function append_profile() {
-  echo "$1" >> ~/.bashrc
+function has_command() {
+  which -s "$1"
 }
 
-function install_chrome() {
-  # download chrome https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb /tmp/chrome.deb
-  # echo "Installing chrome..."
-  # if ! sudo dpkg -i /tmp/chrome.deb; then
-  #   sudo apt -y -f install
-  # fi
+function has_fn() {
+  declare -F "$1" > /dev/null
+}
 
-  local -r chrome_path=$( which google-chrome )
-  if [[ -n "${chrome-path}" ]]; then
-    append_profile "export CHROME_BIN=${chrome_path}"
+function error() {
+  echo -e "${RED_BOLD}Error: ${@}${RESET}" >&2
+  exit 1
+}
+
+function info() {
+  echo -e "${GREEN_BOLD}${@}${RESET}" >&2
+}
+
+function _check_module() {
+  if has_fn "check_${1}"; then
+    "check_${1}"
+  else
+    false
   fi
 }
 
+function _require_module() {
+  local -r name="${1?Missing module name}"
 
-while [[ -n "$1" ]]; do
-  install_${1}
-  shift
-done
+  if [[ -z "${required_modules[$name]}" ]]; then
+    local -r module="${all_modules[$name]}"
+    if [[ -n "$module" ]]; then
+      source "$module"
+      if _check_module "$name"; then
+        echo "Module ${name} is already installed."
+      else
+        echo "Installing module: ${name}..."
+        "install_${name}"
+      fi
+      required_modules[$name]="installed"
+    else
+      echo "Unknown module: ${name}"
+      exit 1
+    fi
+  fi
+}
+
+function require() {
+  while [[ -n "$1" ]]; do
+    _require_module "$1"
+    shift
+  done
+}
+
+function _init_modules() {
+  local basename
+  local name
+  local modulepath
+
+  for module in $(ls "$THIS_DIR/installers/"); do
+    basename=$(basename "$module" .sh)
+    name=$(echo "$basename" | sed 's/^_//')
+    modulepath="$THIS_DIR/installers/$module"
+
+    if [[ "$name" == "$basename" ]]; then
+      modules[$name]="$modulepath"
+    fi
+    all_modules[$name]="$modulepath"
+  done
+}
+
+#**********************************************************
+# MAIN
+#**********************************************************
+
+if ! ( $is_linux || $is_apple ); then
+  echo "Unsupported OS: $(uname)"
+  exit 1
+fi
+
+if [[ -z "$1" ]]; then
+  echo "$HELP_TEXT"
+  exit 0
+fi
+
+case "$1" in
+  --help|-h)
+    echo "$HELP_TEXT"
+    ;;
+  --list|-l)
+    _init_modules
+    echo "Available modules:"
+    echo "${!modules[@]}" | tr ' ' '\n' | sort
+    ;;
+  *)
+    _init_modules
+    require "$@"
+    ;;
+esac
