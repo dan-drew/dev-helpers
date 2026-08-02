@@ -1,13 +1,12 @@
 function apt_update() {
-  if [[ "${module_state[apt_updated]}" != 'true' ]]; then
-    echo "Updating apt packages..."
-    sudo apt update
-    module_state[apt_updated]='true' 
-  fi
+  sudo apt update
+  module_state[apt_updated]='true' 
 }
 
 function apt_install() {
-  apt_update
+  if [[ "${module_state[apt_updated]}" != 'true' ]]; then
+    apt_update
+  fi
   echo "Installing apt packages: ${@}..."
   sudo apt install -y "$@"
 }

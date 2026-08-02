@@ -13,8 +13,8 @@ readonly RED='\033[31m'
 readonly GREEN='\033[32m'
 readonly BOLD='\033[1m'
 readonly RESET='\033[0m'
-readonly RED_BOLD='${RED}${BOLD}'
-readonly GREEN_BOLD='${GREEN}${BOLD}'
+readonly RED_BOLD="${RED}${BOLD}"
+readonly GREEN_BOLD="${GREEN}${BOLD}"
 
 readonly HELP_TEXT="Usage:
   $0 --help
