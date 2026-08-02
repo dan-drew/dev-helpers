@@ -67,3 +67,5 @@ case "${PROMPT_COMMAND:-}" in
   *__dev_helpers_prompt*) ;;
   *) PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }__dev_helpers_prompt" ;;
 esac
+
+export PATH="$HOME/.local/bin:$PATH
