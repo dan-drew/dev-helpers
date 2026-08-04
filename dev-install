@@ -34,6 +34,7 @@ declare -A all_modules
 declare -A modules
 declare -A required_modules
 declare -g -A module_state
+declare -g -a post_messages
 
 #**********************************************************
 # HELPER FUNCTIONS
@@ -114,6 +115,15 @@ function _init_modules() {
   done
 }
 
+function _print_post_messages() {
+  if [[ ${#post_messages[@]} -gt 0 ]]; then
+    echo
+    for msg in "${post_messages[@]}"; do
+      echo -e "${GREEN_BOLD}${msg}${RESET}"
+    done
+  fi
+}
+
 #**********************************************************
 # MAIN
 #**********************************************************
@@ -140,5 +150,6 @@ case "$1" in
   *)
     _init_modules
     require "$@"
+    _print_post_messages
     ;;
 esac

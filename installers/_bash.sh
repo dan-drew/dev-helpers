@@ -4,8 +4,9 @@ PATH=\$PATH:${THIS_DIR}
 "
 
 function bash_reload() {
-  if [[ -f "$HOME/.bashrc" ]]; then
-    source "$HOME/.bashrc"
+  if [[ -z "${module_state[bash_reload]}" ]]; then
+    module_state[bash_reload]=1
+    post_messages+=("Bash configuration changed. Run \"source $HOME/.bashrc\" or  log out and back in for changes to take effect.")
   fi
 }
 
