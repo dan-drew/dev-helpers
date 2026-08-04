@@ -54,7 +54,11 @@ function __dev_helpers_prompt() {
     PS1+='\[\e[34m\]'"[$branch]"
   fi
 
-  if [[ -f main.tf || -f variables.tf || -f outputs.tf || -f terraform.tf ]] &&
+  if [[ -f terragrunt.hcl ]] &&
+    workspace=$(terragrunt --log-format bare run -- workspace show 2>/dev/null); then
+    workspace=$(__dev_helpers_escape_prompt_text "$workspace")
+    PS1+='\[\e[38;5;208m\]'"[$workspace]"
+  elif [[ -f main.tf || -f variables.tf || -f outputs.tf || -f terraform.tf ]] &&
     workspace=$(terraform workspace show 2>/dev/null); then
     workspace=$(__dev_helpers_escape_prompt_text "$workspace")
     PS1+='\[\e[38;5;208m\]'"[$workspace]"
