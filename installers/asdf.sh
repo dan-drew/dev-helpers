@@ -1,10 +1,10 @@
 readonly ASDF_VERSIONS_FILE='.tool-versions'
 
 function install_asdf() {
-  require git gh bash
+  require git gh shell
   mkdir -p ~/.asdf
   gh_download_latest_release "asdf-vm/asdf" "asdf-*-linux-amd64.tar.gz" "/tmp/asdf.tar.gz" | tar -xz -C ~/.asdf
-  bash_append asdf "PATH=\$PATH:\$HOME/.asdf:\$HOME/.asdf/shims"
+  shell_append asdf "PATH=\$PATH:\$HOME/.asdf:\$HOME/.asdf/shims"
 }
 
 function asdf_plugin_add() {

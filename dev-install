@@ -46,7 +46,7 @@ function download() {
 }
 
 function has_command() {
-  which -s "$1"
+  which -s "$1" 2>&1 > /dev/null
 }
 
 function has_fn() {
@@ -60,6 +60,10 @@ function error() {
 
 function info() {
   echo -e "${GREEN_BOLD}${@}${RESET}" >&2
+}
+
+function test_command() {
+  "$@" 2>&1 > /dev/null
 }
 
 function _check_module() {

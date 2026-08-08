@@ -1,3 +1,16 @@
+function __is_bash() {
+  [ -n "$BASH_VERSION" ]
+}
+
+function __is_zsh() {
+  [ -n "$ZSH_VERSION" ]
+}
+
+if ! ( __is_bash || __is_ssh ); then
+  echo "Unsupported shell"
+  exit 1
+fi
+
 function __dev_helpers_reverse_path() {
   local -r path="$1"
   local reversed=""
@@ -29,10 +42,10 @@ function __dev_helpers_escape_prompt_text() {
   printf '%s' "$text"
 }
 
-function __dev_helpers_prompt() {
+declare -a __dev_helpers_prompts=( __dev_helpers_prompt_path )
+
+function __dev_helpers_prompt_path() {
   local prompt_path="$PWD"
-  local branch
-  local workspace
   local title
 
   if [[ "$PWD" == "$HOME" ]]; then
@@ -47,7 +60,7 @@ function __dev_helpers_prompt() {
   title=$(__dev_helpers_escape_prompt_text "$title")
 
   prompt_path=$(__dev_helpers_escape_prompt_text "$prompt_path")
-  PS1='\[\e]0;'"$title"'\a\]\[\e[32m\]'"$prompt_path"
+  echo '\[\e]0;'"$title"'\a\]\[\e[32m\]'"$prompt_path"
 
   if branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); then
     branch=$(__dev_helpers_escape_prompt_text "$branch")
@@ -64,12 +77,26 @@ function __dev_helpers_prompt() {
     PS1+='\[\e[38;5;208m\]'"[$workspace]"
   fi
 
+}
+
+function __dev_helpers_prompt() {
+  local prompt=''
+  local fn
+
+  for fn in "${__dev_helpers_prompts[@]}"; do
+    prompt+=$( $fn )
+  done
+
+  PS1="$prompt"
   PS1+='\[\e[32m\]$ \[\e[0m\]'
 }
 
 case "${PROMPT_COMMAND:-}" in
-  *__dev_helpers_prompt*) ;;
-  *) PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }__dev_helpers_prompt" ;;
+  *__dev_helpers_prompt*) 
+    ;;
+  *) 
+    PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }__dev_helpers_prompt" 
+    ;;
 esac
 
 export PATH="$HOME/.local/bin:$PATH"
