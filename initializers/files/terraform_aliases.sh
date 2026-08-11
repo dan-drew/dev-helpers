@@ -71,7 +71,7 @@ HELP
     shift
   done
 
-  __terraform apply "$args[@]"
+  __terraform apply "${args[@]}"
 }
 
 function tfd() {
@@ -92,7 +92,7 @@ HELP
     shift
   done
 
-  __terraform apply "$args[@]"
+  __terraform apply "${args[@]}"
 }
 
 function tfi() {
