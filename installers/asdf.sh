@@ -18,18 +18,15 @@ function asdf_plugin_add() {
 
 function _asdf_has_version() {
   local -r plugin="${1?Missing plugin name}"
+  local -a current
+  current=($(asdf current --no-header "$plugin" 2>/dev/null))
 
-  read -r p1 pv pp pi <<< "$(asdf current --no-header python 2>/dev/null)"
-
-  if [ "$pi" == "true" ]; then
-    # Yes and already installed
-    return 2
-  elif [ "${pv:0:1}" != "_" ]; then
-    # No and not defined
-    return 0
+  if [ "${current[3]}" == "true" ]; then
+    echo "installed"
+  elif [ "${current[1]:0:1}" == "_" ]; then
+    echo "no"
   else
-    # Yes and not installed
-    return 1
+    echo "yes"
   fi
 }
 
@@ -40,20 +37,24 @@ function asdf_install() {
   asdf_plugin_add "$plugin"
 
   if [ -z "$version" ]; then
-    local has_version=
+    local has_version
+    has_version=$(_asdf_has_version "$plugin")
 
-    if ! ( _asdf_has_version "$plugin" && has_version=$? ); then
-      version="latest"
-    elif [ $has_version -eq 2 ]; then
+    if [ "$has_version" == "installed" ]; then
       info "$plugin is already installed and set to the correct version"
       return 0
+    elif [ "$has_version" == "no" ]; then
+      # Default to latest version
+      version="latest"
     fi
   fi
 
   echo "Installing $plugin $version..."
   if [ -n "$version" ]; then
     asdf install "$plugin" "$version"
-    asdf set -u "$plugin" "$version"
+    if [ "$version" == "latest" ]; then
+      asdf set -u "$plugin" "$version"
+    fi
   else
     asdf install "$plugin"
   fi
