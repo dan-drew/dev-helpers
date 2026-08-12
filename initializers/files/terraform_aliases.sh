@@ -92,7 +92,7 @@ HELP
     shift
   done
 
-  __terraform apply "${args[@]}"
+  __terraform destroy "${args[@]}"
 }
 
 function tfi() {
