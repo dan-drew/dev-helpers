@@ -1,7 +1,7 @@
 readonly ASDF_VERSIONS_FILE='.tool-versions'
 
 function install_asdf() {
-  require git gh shell
+  require git github shell
   mkdir -p ~/.asdf
   gh_download_latest_release "asdf-vm/asdf" "asdf-*-linux-amd64.tar.gz" "/tmp/asdf.tar.gz" | tar -xz -C ~/.asdf
   shell_append asdf "PATH=\$PATH:\$HOME/.asdf:\$HOME/.asdf/shims"
@@ -14,6 +14,14 @@ function asdf_plugin_add() {
   if ! asdf plugin list | grep -Fq "$plugin"; then
     asdf plugin add "$plugin" #"$repo"
   fi
+}
+
+function asdf_is_installed() {
+  local -r plugin="${1?Missing plugin name}"
+  local -a current
+  current=($(asdf current --no-header "$plugin" 2>/dev/null))
+
+  [ "${current[3]}" == "true" ]
 }
 
 function _asdf_has_version() {

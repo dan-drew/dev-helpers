@@ -22,7 +22,7 @@ function gh_download_latest_release() {
   gh release download "$latest_release" --repo "$repo" --pattern "$asset_name" --output -
 }
 
-function install_gh() {
+function install_github() {
   if ! has_command gh; then
     if $is_linux; then
       apt_install gh

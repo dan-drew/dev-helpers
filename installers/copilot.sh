@@ -1,4 +1,4 @@
-function install_gh_copilot() {
+function install_copilot() {
   if ! has_command copilot; then
     if ! has_command node; then
       require node
