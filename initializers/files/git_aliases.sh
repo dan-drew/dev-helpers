@@ -61,3 +61,33 @@ function gcl() {
     git checkout $current_branch
   fi
 }
+
+function git-meta-init() {
+  if ! [ -d .git ]; then
+    git init
+  fi
+
+  local module_origin
+  local has_modules=false
+  for module_directory in $(find . -mindepth 1 -maxdepth 1 -type d); do
+    if [ -d "$module_directory/.git" ]; then
+      module_origin=$(git -C "$module_directory" remote get-url origin)
+      git submodule add "$module_origin" "$module_directory"
+      has_modules=true
+    fi
+  done
+
+  if $has_modules; then
+    ga
+    gc 'Initialize meta repository with submodules'
+    echo "Repo initialized. Run \"gp\" to push to remote."
+  fi
+}
+
+function git-each() {
+  for module_directory in $(find . -mindepth 1 -maxdepth 1 -type d); do
+    if [ -d "$module_directory/.git" ]; then
+      git -C "$module_directory" "$@" | awk -v module="${module_directory:2}" '{print module ": " $0}'
+    fi
+  done
+}
