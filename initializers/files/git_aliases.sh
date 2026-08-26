@@ -80,7 +80,7 @@ function git-meta-init() {
   if $has_modules; then
     ga
     gc 'Initialize meta repository with submodules'
-    echo "Repo initialized. Run \"gp\" to push to remote."
+    __dh_success "Repo initialized. Run \"gp\" to push to remote."
   fi
 }
 
@@ -90,4 +90,39 @@ function git-each() {
       git -C "$module_directory" "$@" | awk -v module="${module_directory:2}" '{print module ": " $0}'
     fi
   done
+}
+
+function git-state() {
+  local branch
+  local status
+  local upstream
+  local ahead
+  local behind
+
+  branch=$(git branch --show-current)
+  status=$(git status --porcelain)
+
+  if upstream=$(git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null); then
+    read -r ahead behind < <(git rev-list --left-right --count "HEAD...$upstream")
+
+    if (( behind > 0 )); then
+      __dh_error "Branch '$branch' is $behind commit(s) behind '$upstream'."
+    fi
+
+    if (( ahead > 0 )); then
+      __dh_warn "Branch '$branch' is $ahead commit(s) ahead of '$upstream'."
+    fi
+  else
+    __dh_error "Branch '$branch' is not tracking a remote branch."
+  fi
+
+  if [[ "$branch" != "main" && "$branch" != "master" ]]; then
+    __dh_warn "Branch '$branch' is a feature branch."
+  fi
+
+  if [[ -n "$status" ]]; then
+    __dh_error "Branch '$branch' has uncommitted changes."
+  else
+    __dh_success "Branch '$branch' is clean."
+  fi
 }
