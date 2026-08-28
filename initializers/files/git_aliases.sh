@@ -4,10 +4,21 @@ alias gcf='git commit --fixup=HEAD'
 alias gp='git push origin HEAD'
 alias gpf='git push --force-with-lease origin HEAD'
 
-function git_main_branch() {
-  local name=`git branch --no-color -l main master | head -n1`
-  if [[ -n "$name" ]]; then
+readonly -a __GIT_MAIN_BRANCHES=("main" "master")
+
+function git-main-branch() {
+  local name=`git branch --no-color -l "${__GIT_MAIN_BRANCHES[@]}" | head -n1`
+  if [ -n "$name" ]; then
     echo "${name:2}"
+    return 0
+  else
+    return 1
+  fi
+}
+
+function is-git-main-branch() {
+  local branch="${1:-$(git branch --show-current)}"
+  if [[ " ${__GIT_MAIN_BRANCHES[@]} " =~ " $branch " ]]; then
     return 0
   else
     return 1
@@ -19,7 +30,7 @@ function gc() {
 }
 
 function gr() {
-  git rebase -i --autosquash ${1:-`git_main_branch`}
+  git rebase -i --autosquash ${1:-`git-main-branch`}
 }
 
 function gl() {
@@ -31,7 +42,7 @@ function gls() {
 }
 
 function gcl() {
-  local source_branch=${1:-`git_main_branch`}
+  local source_branch=${1:-`git-main-branch`}
   local current_branch=$(git branch --show-current)
 
   if [[ "$current_branch" != "$source_branch" ]]; then
@@ -92,6 +103,19 @@ function git-each() {
   done
 }
 
+function git-upstream() {
+  # Get the upstream branch for the given branch, if it exists
+  # If it doesn't exist, test for origin/<branch> and return that if it exists
+  local -r branch="$1"
+  local upstream
+  upstream=$(git rev-parse --abbrev-ref "$branch@{upstream}" 2>/dev/null)
+  if [[ -n "$upstream" ]]; then
+    echo "$upstream"
+  else
+    git rev-parse --verify "origin/$branch" 2>/dev/null && echo "origin/$branch"
+  fi
+}
+
 function git-state() {
   local branch
   local status
@@ -101,8 +125,22 @@ function git-state() {
 
   branch=$(git branch --show-current)
   status=$(git status --porcelain)
+  upstream=$(git-upstream "$branch")
+  is_main_branch=$(is-git-main-branch "$branch" && echo true || echo false)
+  ahead=0
+  behind=0
 
-  if upstream=$(git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null); then
+  if [[ -n "$upstream" ]]; then
+    read -r ahead behind < <(git rev-list --left-right --count "HEAD...$upstream")
+  fi
+
+  
+
+  if upstream=$(git-upstream "$branch"); then
+    if ! is-git-main-branch "$branch"; then
+      __dh_warn "Branch '$branch' is a feature branch."
+    fi
+
     read -r ahead behind < <(git rev-list --left-right --count "HEAD...$upstream")
 
     if (( behind > 0 )); then
@@ -116,7 +154,7 @@ function git-state() {
     __dh_error "Branch '$branch' is not tracking a remote branch."
   fi
 
-  if [[ "$branch" != "main" && "$branch" != "master" ]]; then
+  if [[ ! " ${__GIT_MAIN_BRANCHES[@]} " =~ " $branch " ]]; then
     __dh_warn "Branch '$branch' is a feature branch."
   fi
 

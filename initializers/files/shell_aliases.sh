@@ -1,7 +1,7 @@
-__DEV_HELPERS_PRINT_LEVELS=(
+readonly -A __DEV_HELPERS_PRINT_LEVELS=(
   [debug]='\033[34m'
   [info]=''
-  [success]='\033[1m\033[32m'
+  [success]='\033[32m\033[1m'
   [warn]='\033[1m\033[33m'
   [error]='\033[1m\033[31m'
 )
@@ -18,11 +18,18 @@ function __dev_helpers_help() {
 
 function __dev_helpers_print() {
   local -r level=${1:?"Missing level argument"}
+  
+  local EOL="\n"
+  if [ "$2" == "-n" ]; then
+    EOL=""
+    shift
+  fi
+
   local -r message=${2:?"Missing message argument"}
   local -r color=${__DEV_HELPERS_PRINT_LEVELS[$level]?"Unknown level: $level"}
 
   shift 2
-  printf "${color}${message}\033[0m\n" "$@" >&2
+  printf "${color}${message}\033[0m${EOL}" "$@" >&2
 }
 
 function __dh_error() {
